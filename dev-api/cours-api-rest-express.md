@@ -1,14 +1,3 @@
----
-tags:
-  - cours
-  - dev-api
-  - nodejs
-  - express
-  - rest
-  - http
-date: 2026-09-21
----
-
 # Dev API — Architecture REST, Node.js & Express
 
 ## 1. Fondamentaux du Web & de l'Environnement
