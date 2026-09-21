@@ -21,6 +21,7 @@
       --link-color: #bb9af7;
       --sidebar-nav-link-color: #9aa5ce;
       --sidebar-nav-link-color--active: #ffffff;
+      --theme-color: #bb9af7;
     }
 
     body {
@@ -28,12 +29,12 @@
       color: #c0caf5 !important;
     }
 
+    /* Barre latérale */
     .sidebar {
       background-color: #14151f !important;
       border-right: 1px solid #24283b;
     }
 
-    /* Style du menu actif (accent violet) */
     .sidebar-nav li.active > a {
       background-color: #7aa2f733 !important;
       color: #bb9af7 !important;
@@ -42,7 +43,7 @@
       font-weight: bold;
     }
 
-    /* Blocs de code */
+    /* Code et blocs de code */
     pre[class*="language-"] {
       background: #16161e !important;
       border: 1px solid #24283b;
@@ -54,7 +55,7 @@
       background: #24283b !important;
     }
 
-    /* Barre de recherche */
+    /* Champ de saisie de recherche */
     .search input {
       background: #24283b !important;
       color: #fff !important;
@@ -62,7 +63,35 @@
       border-radius: 6px;
     }
 
-    /* --- CORRECTION DES TABLEAUX --- */
+    .search .clear-button,
+    .search .input-wrap {
+      border-bottom-color: transparent !important;
+    }
+
+    /* Résultats de recherche */
+    .search .matching-post {
+      border-bottom: 1px solid #24283b !important;
+    }
+
+    .search .matching-post h2 {
+      color: #7aa2f7 !important;
+      font-size: 1.1rem;
+    }
+
+    .search .matching-post p {
+      color: #9aa5ce !important;
+    }
+
+    .search .matching-post em {
+      color: #bb9af7 !important;
+      background-color: #7aa2f733 !important;
+      font-style: normal;
+      font-weight: 600;
+      padding: 0 4px;
+      border-radius: 3px;
+    }
+
+    /* Tableaux */
     table {
       border-collapse: collapse;
       width: 100%;
@@ -84,7 +113,6 @@
       color: #c0caf5 !important;
     }
 
-    /* Fond uni/alterné sombre (supprime le blanc) */
     tr {
       background-color: #1a1b26 !important;
       border-top: none !important;
