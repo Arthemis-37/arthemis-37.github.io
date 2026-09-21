@@ -744,6 +744,7 @@ println(valides) // [Note : 14.0/20, Note : 19.0/20, Note : 11.5/20]
 val moyenne = notes.sumOf { it } / notes.size
 val aReussi = notes.any { it >= 18.0 } // true
 ```
+
 ---
 
 ## 17. Cas Pratique : Manipuler une Collection d'Événements
@@ -842,6 +843,7 @@ if (index != -1) {
     planning[index] = planning[index].copy(capacity = 200)
 }
 ```
+
 ### E. Parcourir une liste avec la boucle `for`
 
 La boucle `for` s'adapte à plusieurs cas d'usage selon qu'on a besoin uniquement de l'élément, de sa position, ou des deux en même temps.
@@ -911,6 +913,229 @@ for ((id, title, capacity) in events) {
     println("[$id] $title : jauge de$capacity")
 }
 ```
+
+### F. Filtrer une collection avec la méthode `filter`
+
+La méthode **`filter`** est une fonction d'ordre supérieur (*higher-order function*) essentielle en Kotlin. Elle permet d'extraire les éléments d'une collection qui satisfont une condition donnée (un prédicat booléen) et renvoie une **nouvelle liste** contenant uniquement ces éléments, sans jamais modifier la collection d'origine.
+
+---
+
+#### 1. Fonctionnement de base avec `it`
+La lambda passée à `filter` évalue chaque élément. Si l'expression renvoie `true`, l'élément est conservé :
+
+```kotlin
+val numbers = listOf(1, 2, 3, 4, 5, 6, 7, 8)
+
+// Ne conserver que les nombres pairs
+val pairs = numbers.filter { it % 2 == 0 }
+println(pairs) // [2, 4, 6, 8]
+```
+
+---
+
+#### 2. Filtrer une liste d'objets (`Event`)
+Sur des collections d'objets métier, `filter` permet d'écrire des requêtes très lisibles :
+
+```kotlin
+val events = listOf(
+    Event(1, "Conférence Kotlin", capacity = 150, price = 0.0),
+    Event(2, "Atelier Android", capacity = 30, price = 15.0),
+    Event(3, "Hackathon Mobile", capacity = 80, price = 5.0),
+    Event(4, "Meetup UI/UX", capacity = 50, price = 0.0)
+)
+
+// Filtrer sur un seul critère : les événements gratuits
+val freeEvents = events.filter { it.price == 0.0 }
+
+// Filtrer avec plusieurs conditions logiques : payant ET plus de 30 places
+val bigPaidEvents = events.filter { it.price > 0.0 && it.capacity > 30 }
+```
+
+---
+
+#### 3. Les variantes utiles de `filter`
+
+Kotlin propose plusieurs déclinaisons spécialisées pour éviter d'écrire du code verbeux :
+
+| Variante | Rôle | Exemple |
+| :--- | :--- | :--- |
+| **`filterNot`** | Conserve les éléments pour lesquels la condition est **fausse** (l'inverse de `filter`). | `events.filterNot { it.price == 0.0 }` *(garde les payants)* |
+| **`filterNotNull`** | Retire tous les éléments `null` d'une liste de types optionnels (`List<T?>` $\rightarrow$ `List<T>`). | `listOf("A", null, "B").filterNotNull()` $\rightarrow$ `["A", "B"]` |
+| **`filterIndexed`** | Fournit à la fois l'index et l'élément dans la lambda `(index, item)`. | `events.filterIndexed { index, _ -> index < 2 }` |
+| **`filterIsInstance<T>()`** | Filtre et convertit automatiquement (*smart cast*) les éléments d'un type précis. | `mixedList.filterIsInstance<String>()` |
+
+---
+
+#### 4. Filtrer des listes mutables à chaud : `retainAll` vs `removeAll`
+Si l'objectif est de modifier directement une `MutableList` sans créer de copie en mémoire :
+
+```kotlin
+val planning = events.toMutableList()
+
+// Supprime directement les événements de moins de 40 places
+planning.removeAll { it.capacity < 40 }
+
+// Garde uniquement les gratuits (supprime tout le reste)
+planning.retainAll { it.price == 0.0 }
+```
+#### 5. Transformer une collection avec la méthode `map`
+
+La méthode **`map`** est l'opération de transformation par excellence en programmation fonctionnelle et en Kotlin. Elle applique une fonction ou une lambda à **chaque élément** d'une collection d'origine et renvoie une **nouvelle liste** contenant les résultats obtenus.
+
+Contrairement à `filter` qui peut réduire la taille de la liste, `map` conserve **toujours exactement le même nombre d'éléments** que la collection de départ, mais peut en modifier la valeur et le type.
+
+---
+
+#### 6. Principe de base : Transformation simple
+La variable implicite `it` représente chaque élément au fur et à mesure du parcours. La valeur produite par la lambda constitue le nouvel élément :
+
+```kotlin
+val nombres = listOf(1, 2, 3, 4, 5)
+
+// Multiplier chaque élément par 2
+val doubles = nombres.map { it * 2 }
+println(doubles) // [2, 4, 6, 8, 10]
+```
+
+---
+
+#### 7. Changement de type (Projection de données)
+L'un des usages les plus fréquents de `map` consiste à transformer une liste d'un type $A$ vers une liste d'un type $B$ (par exemple, extraire un champ d'un objet ou préparer des données pour l'interface graphique) :
+
+```kotlin
+// Modèle de données
+data class Event(val id: Int, val title: String, val price: Double)
+
+val events = listOf(
+    Event(1, "Conférence Kotlin", 0.0),
+    Event(2, "Atelier Compose", 25.0)
+)
+
+// List<Event> -> List<String> (extraction d'une propriété)
+val titres: List<String> = events.map { it.title }
+println(titres) // [Conférence Kotlin, Atelier Compose]
+
+// List<Event> -> List<String> (formatage personnalisé)
+val etiquettes: List<String> = events.map { 
+    "${it.title} (${if (it.price == 0.0) "Gratuit" else "${it.price} €"})" 
+}
+```
+
+---
+
+#### 8. Chaînage typique : `filter` puis `map`
+Dans un pipeline de données, on filtre généralement les données d'abord, puis on transforme les éléments conservés :
+
+```kotlin
+val evenementsPayants = events
+    .filter { it.price > 0.0 }
+    .map { "${it.title} : ${it.price} €" }
+```
+
+> **Attention à l'ordre dans la chaîne :**
+> Si tu écris `events.map { ... }.filter { ... }`, tu effectues la transformation sur **tous** les éléments avant d'en jeter une partie. Mettre `filter` en premier permet de ne transformer que les éléments réellement utiles, ce qui optimise les calculs et la mémoire.
+
+---
+
+#### 9. Les variantes indispensables de `map`
+
+| Variante                    | Rôle & Utilité                                                                                                       | Exemple                                                         |
+| :-------------------------- | :------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------- |
+| **`mapNotNull`**            | Transforme les éléments et **ignore automatiquement les résultats `null`** (combine un `map` et un `filterNotNull`). | `val valides = list.mapNotNull { it.toIntOrNull() }`            |
+| **`mapIndexed`**            | Fournit à la fois la position et l'élément `(index, item)` lors de la transformation.                                | `events.mapIndexed { index, e -> "#${index + 1} -${e.title}" }` |
+| **`flatMap`**               | Transforme chaque élément en une sous-liste, puis **aplatit** le tout en une seule liste unique à une dimension.     | `listes.flatMap { it.elements }`                                |
+| **`mapKeys` / `mapValues`** | Dédiées aux dictionnaires (`Map`) pour transformer uniquement les clés ou uniquement les valeurs.                    | `panier.mapValues { it.value * 1.20 }`                          |
+### G. Rechercher et Trier une collection : `find` et `sortedBy`
+
+---
+
+#### 1. La méthode `find` (Recherche du premier élément correspondant)
+
+La méthode **`find`** parcourt la collection et s'arrête dès qu'elle rencontre le **premier élément** qui satisfait la condition fournie.
+
+* **Type de retour nullable (`T?`)** : Si aucun élément ne correspond au critère, `find` renvoie `null` au lieu de planter l'application. On utilise donc l'opérateur sécurisé `?.` ou l'opérateur Elvis `?:` pour traiter le résultat.
+* **Équivalent explicite** : `find { condition }` est un alias plus lisible de `firstOrNull { condition }`.
+
+```kotlin
+val events = listOf(
+    Event(1, "Conférence Kotlin", capacity = 150, price = 0.0),
+    Event(2, "Atelier Android", capacity = 30, price = 15.0),
+    Event(3, "Hackathon Mobile", capacity = 80, price = 5.0)
+)
+
+// Trouver le premier atelier payant
+val premierPayant: Event? = events.find { it.price > 0.0 }
+println(premierPayant?.title) // Atelier Android
+
+// Recherche infructueuse : gestion sécurisée du null
+val grandAtelier = events.find { it.capacity > 500 }
+val titreAffiche = grandAtelier?.title ?: "Aucun événement trouvé"
+println(titreAffiche) // Aucun événement trouvé
+
+// Variante pour chercher le dernier élément correspondant
+val dernierPayant: Event? = events.findLast { it.price > 0.0 }
+println(dernierPayant?.title) // Hackathon Mobile
+```
+
+---
+
+#### 2. La méthode `sortedBy` (Tri ascendant et descendant)
+
+Par défaut, les fonctions de tri en Kotlin **ne modifient pas** la collection d'origine : elles renvoient une **nouvelle liste** triée.
+
+On utilise une lambda pour désigner le champ servant de clé de tri :
+
+```kotlin
+// 1. Tri ascendant (du plus petit au plus grand)
+val parPrixCroissant = events.sortedBy { it.price }
+// Résultat : 0.0, 5.0, 15.0
+
+// 2. Tri descendant (du plus grand au plus petit) avec sortedByDescending
+val parCapaciteDecroissante = events.sortedByDescending { it.capacity }
+// Résultat : 150 places, 80 places, 30 places
+
+// 3. Tri alphabétique sur une chaîne
+val parTitreAlphabetique = events.sortedBy { it.title.lowercase() }
+```
+
+---
+
+#### 3. Tri multi-critères : `thenBy`
+
+Si plusieurs éléments possèdent la même valeur sur le premier critère, on peut affiner le tri à l'aide de `compareBy` et `thenBy` :
+
+```kotlin
+val sessions = listOf(
+    Event(1, "Atelier Compose", capacity = 30, price = 10.0),
+    Event(2, "Atelier XML", capacity = 20, price = 10.0),
+    Event(3, "Conférence Kotlin", capacity = 150, price = 0.0)
+)
+
+// Trier d'abord par prix, puis par capacité croissante en cas d'égalité de prix
+val sessionsTriees = sessions.sortedWith(
+    compareBy<Event> { it.price }.thenBy { it.capacity }
+)
+
+sessionsTriees.forEach { println("${it.title} : ${it.price} € (${it.capacity} pl.)") }
+// Sortie :
+// Conférence Kotlin : 0.0 € (150 pl.)
+// Atelier XML : 10.0 € (20 pl.)
+// Atelier Compose : 10.0 € (30 pl.)
+```
+
+---
+
+#### 4. Tri à chaud sur une liste modifiable (`MutableList`)
+
+Si l'on manipule une `MutableList` et que l'on veut trier directement en mémoire sans réallouer une nouvelle liste :
+
+```kotlin
+val planningModifiable = events.toMutableList()
+
+// Tri sur place (in-place)
+planningModifiable.sortBy { it.capacity }
+planningModifiable.sortByDescending { it.price }
+```
 ---
 
 ## 18. Bonnes Pratiques : Lire et Analyser du Code Kotlin Efficacement
@@ -977,77 +1202,226 @@ val statut = when {
 
 ### C. Réflexes pour le débogage et la relecture
 
-| Piège fréquent | Symptôme | Cause / Solution |
-| :--- | :--- | :--- |
-| **Parenthèses invisibles** | `action { ... }` | C'est un appel de fonction standard utilisant la trailing lambda, pas un bloc de classe. |
-| **Propriété introuvable** | Erreur sur `it.name` | Vérifier si l'étape précédente n'a pas transformé la liste (ex. après un `.map { it.id }`, `it` devient un `Int`, plus l'objet d'origine). |
-| **NullPointer inattendu** | Appel direct sur un résultat | Utiliser `?.` (safe call) si la méthode précédente renvoie un type nullable (comme `.find { }` ou `.firstOrNull()`). |
+| Piège fréquent              | Symptôme                          | Cause / Solution                                                                                                                                               |
+| :-------------------------- | :-------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Parenthèses invisibles**  | `action { ... }`                  | C'est un appel de fonction standard utilisant la trailing lambda, pas un bloc de classe.                                                                       |
+| **Propriété introuvable**   | Erreur sur `it.name`              | Vérifier si l'étape précédente n'a pas transformé la liste (ex. après un `.map { it.id }`, `it` devient un `Int`, plus l'objet d'origine).                     |
+| **NullPointer inattendu**   | Appel direct sur un résultat      | Utiliser `?.` (safe call) si la méthode précédente renvoie un type nullable (comme `.find { }` ou `.firstOrNull()`).                                           |
 | **Modification inopérante** | `.filter { ... }` ne modifie rien | Les méthodes de collection en lecture seule renvoient une **nouvelle** liste sans muter la liste de départ ; il faut réassigner le résultat dans une variable. |
-
-### G. Transformer une collection avec la méthode `map`
-
-La méthode **`map`** est l'opération de transformation par excellence en programmation fonctionnelle et en Kotlin. Elle applique une fonction ou une lambda à **chaque élément** d'une collection d'origine et renvoie une **nouvelle liste** contenant les résultats obtenus.
-
-Contrairement à `filter` qui peut réduire la taille de la liste, `map` conserve **toujours exactement le même nombre d'éléments** que la collection de départ, mais peut en modifier la valeur et le type.
 
 ---
 
-#### 1. Principe de base : Transformation simple
-La variable implicite `it` représente chaque élément au fur et à mesure du parcours. La valeur produite par la lambda constitue le nouvel élément :
+## 19. La Sécurité des Nulls (*Null Safety*)
+
+L'un des plus grands atouts de Kotlin est son système de types conçu pour éradiquer le fameux plantage `NullPointerException` (le *« billion-dollar mistake »*). 
+
+En Kotlin, **les types sont non-nullables par défaut**. Une variable standard ne peut jamais contenir la valeur `null` sans déclencher une erreur à la compilation.
+
+---
+
+### A. Rendre un type nullable avec l'opérateur `?`
+
+Pour autoriser explicitement une variable à recevoir `null`, on ajoute un point d'interrogation **`?`** après son type :
 
 ```kotlin
-val nombres = listOf(1, 2, 3, 4, 5)
+// 1. Type non-nullable (par défaut)
+var prenom: String = "Alex"
+// prenom = null // ❌ Erreur de compilation : Null can not be a value of a non-null type String
 
-// Multiplier chaque élément par 2
-val doubles = nombres.map { it * 2 }
-println(doubles) // [2, 4, 6, 8, 10]
+// 2. Type nullable avec '?'
+var telephone: String? = "0601020304"
+telephone = null // ✅ Valide
 ```
 
 ---
 
-#### 2. Changement de type (Projection de données)
-L'un des usages les plus fréquents de `map` consiste à transformer une liste d'un type $A$ vers une liste d'un type $B$ (par exemple, extraire un champ d'un objet ou préparer des données pour l'interface graphique) :
+### B. Manipuler les types nullables en toute sécurité
+
+Le compilateur interdit d'appeler directement des méthodes sur une référence nullable pour éviter les crashs :
+```kotlin
+val message: String? = "Bonjour"
+// println(message.length) // ❌ Erreur : Only safe (?.) or non-null asserted (!!.) calls are allowed
+```
+
+Pour manipuler cette valeur sans danger, Kotlin propose quatre outils essentiels :
+
+#### 1. L'appel sécurisé (*Safe Call*) : `?.`
+Exécute l'appel de propriété ou de méthode **uniquement si la variable n'est pas `null`**. Si elle vaut `null`, l'ensemble de l'expression renvoie simplement `null` au lieu de planter :
 
 ```kotlin
-// Modèle de données
-data class Event(val id: Int, val title: String, val price: Double)
+val ville: String? = null
 
-val events = listOf(
-    Event(1, "Conférence Kotlin", 0.0),
-    Event(2, "Atelier Compose", 25.0)
-)
+println(ville?.length)      // Affiche : null (aucun crash)
+println(ville?.uppercase()) // Affiche : null
+```
 
-// List<Event> -> List<String> (extraction d'une propriété)
-val titres: List<String> = events.map { it.title }
-println(titres) // [Conférence Kotlin, Atelier Compose]
+---
 
-// List<Event> -> List<String> (formatage personnalisé)
-val etiquettes: List<String> = events.map { 
-    "${it.title} (${if (it.price == 0.0) "Gratuit" else "${it.price} €"})" 
+#### 2. L'opérateur Elvis : `?:`
+Fournit une **valeur de secours par défaut** si la partie gauche vaut `null` :
+
+```kotlin
+val pseudo: String? = null
+
+// Si pseudo est null, on utilise "Invité"
+val nomAffiche: String = pseudo ?: "Invité"
+println(nomAffiche) // Affiche : Invité
+
+// Utilisé pour sortir prématurément d'une fonction (guard clause)
+fun traiterCommande(adresse: String?) {
+    val adresseValide = adresse ?: return
+    println("Envoi vers $adresseValide")
 }
 ```
 
 ---
 
-#### 3. Chaînage typique : `filter` puis `map`
-Dans un pipeline de données, on filtre généralement les données d'abord, puis on transforme les éléments conservés :
+#### 3. L'opérateur d'affirmation non-null (*Not-Null Assertion*) : `!!`
+Force le compilateur à considérer la variable comme non-nulle. 
+
+> **Attention :** Si la variable vaut effectivement `null` à l'exécution, l'application plante immédiatement avec une exception `NullPointerException`. À éviter presque systématiquement :
 
 ```kotlin
-val evenementsPayants = events
-    .filter { it.price > 0.0 }
-    .map { "${it.title} : ${it.price} €" }
+val saisie: String? = null
+// val longueur = saisie!!.length // 💥 Crash à l'exécution !
 ```
 
-> **Attention à l'ordre dans la chaîne :**
-> Si tu écris `events.map { ... }.filter { ... }`, tu effectues la transformation sur **tous** les éléments avant d'en jeter une partie. Mettre `filter` en premier permet de ne transformer que les éléments réellement utiles, ce qui optimise les calculs et la mémoire.
+---
+### C. Exemple d'application : Modèle avec champs optionnels
+
+```kotlin
+data class Utilisateur(
+    val id: Int,
+    val nom: String,
+    val email: String,
+    val biographie: String? = null // Champ optionnel, null par défaut
+)
+
+fun main() {
+    val user1 = Utilisateur(1, "Camille", "camille@test.com")
+    val user2 = Utilisateur(2, "Sam", "sam@test.com", "Dev mobile passionné")
+
+    // Affichage sécurisé avec ?. et ?:
+    println(user1.biographie?.uppercase() ?: "Aucune biographie renseignée")
+    // Affiche : Aucune biographie renseignée
+
+    println(user2.biographie?.uppercase() ?: "Aucune biographie renseignée")
+    // Affiche : DEV MOBILE PASSIONNÉ
+}
+```
 
 ---
 
-#### 4. Les variantes indispensables de `map`
+## 20. Exercice Final : Catalogue d'Événements
 
-| Variante | Rôle & Utilité | Exemple |
-| :--- | :--- | :--- |
-| **`mapNotNull`** | Transforme les éléments et **ignore automatiquement les résultats `null`** (combine un `map` et un `filterNotNull`). | `val valides = list.mapNotNull { it.toIntOrNull() }` |
-| **`mapIndexed`** | Fournit à la fois la position et l'élément `(index, item)` lors de la transformation. | `events.mapIndexed { index, e -> "#${index + 1} -${e.title}" }` |
-| **`flatMap`** | Transforme chaque élément en une sous-liste, puis **aplatit** le tout en une seule liste unique à une dimension. | `listes.flatMap { it.elements }` |
-| **`mapKeys` / `mapValues`** | Dédiées aux dictionnaires (`Map`) pour transformer uniquement les clés ou uniquement les valeurs. | `panier.mapValues { it.value * 1.20 }` |
+Ce cas d'usage récapitule l'ensemble des concepts : modélisation avec `data class`, gestion d'une propriété optionnelle nullable (`String?`), fonction d'extension avec opérateur Elvis (`?:`), recherche sécurisée, pipeline de traitement fonctionnel (`filter` $\rightarrow$ `sortedBy` $\rightarrow$ `map`) et calcul d'agrégation (`sumOf`).
+
+---
+
+### A. Énoncé & Objectifs
+
+1. **Modèle** : Déclarer une `data class Event` avec : `id: Int`, `title: String`, `category: String`, `location: String?` et `capacity: Int`.
+2. **Jeu de données** : Créer une liste d’au moins 5 événements (dont au moins un sans lieu physique et plusieurs partageant la même catégorie).
+3. **Extension** : Ajouter l’extension `Event.displayLocation(): String` retournant le lieu ou `"Lieu à confirmer"`.
+4. **Recherche** : Écrire la fonction `findEventById(events, id): Event?` pour rechercher un événement par son identifiant.
+5. **Filtrage & Tri** : À partir d'une catégorie cible, obtenir les événements correspondants triés par ordre alphabétique de titre.
+6. **Transformation** : Transformer le résultat en `List<String>` au format `"Titre — Lieu"`.
+7. **Affichage & Agrégation** : Afficher le nombre de résultats, chaque ligne obtenue, ainsi que la capacité totale cumulée via `sumOf`.
+
+---
+
+### B. Implémentation Complète
+
+```kotlin
+// 1. Data class Event avec champ optionnel (location: String?)
+data class Event(
+    val id: Int,
+    val title: String,
+    val category: String,
+    val location: String?,
+    val capacity: Int
+)
+
+// 3. Fonction d'extension gérant la valeur null avec l'opérateur Elvis (?:)
+fun Event.displayLocation(): String = location ?: "Lieu à confirmer"
+
+// 4. Recherche par ID renvoyant un type nullable (Event?)
+fun findEventById(events: List<Event>, id: Int): Event? = events.find { it.id == id }
+
+fun main() {
+    // 2. Jeu de données (5 événements)
+    val events = listOf(
+        Event(
+            id = 1,
+            title = "Conférence Kotlin & Android",
+            category = "Tech",
+            location = "Amphi A",
+            capacity = 150
+        ),
+        Event(
+            id = 2,
+            title = "Webinaire Architecture Mobile",
+            category = "Tech",
+            location = null, // Sans lieu physique
+            capacity = 300
+        ),
+        Event(
+            id = 3,
+            title = "Tournoi d'échecs inter-campus",
+            category = "Sport",
+            location = "Salle polyvalente",
+            capacity = 32
+        ),
+        Event(
+            id = 4,
+            title = "Atelier UI/UX Design System",
+            category = "Design",
+            location = "Salle informatique 3",
+            capacity = 25
+        ),
+        Event(
+            id = 5,
+            title = "Hackathon Mobile 48h",
+            category = "Tech",
+            location = "Hub Innovation",
+            capacity = 80
+        )
+    )
+
+    // Test de la fonction de recherche (Point 4)
+    val eventTrouve = findEventById(events, 2)
+    println("Test recherche ID 2 : ${eventTrouve?.title} (${eventTrouve?.displayLocation()})\n")
+
+    // 5. Filtrage par catégorie et tri alphabétique par titre
+    val targetCategory = "Tech"
+    val filteredAndSorted = events
+        .filter { it.category == targetCategory }
+        .sortedBy { it.title }
+
+    // 6. Projection vers une List<String> formatée via la fonction d'extension
+    val formattedList: List<String> = filteredAndSorted.map { event ->
+        "${event.title} — ${event.displayLocation()}"
+    }
+
+    // Calcul de la capacité totale avec sumOf (Question obligatoire A)
+    val totalCapacity = filteredAndSorted.sumOf { it.capacity }
+
+    // 7. Affichage des métriques et résultats
+    println("Nombre de résultats : ${formattedList.size}")
+    formattedList.forEach { println(it) }
+    println("Capacité totale : $totalCapacity")
+}
+```
+
+---
+
+### C. Sortie Console
+
+```text
+Test recherche ID 2 : Webinaire Architecture Mobile (Lieu à confirmer)
+
+Nombre de résultats : 3
+Conférence Kotlin & Android — Amphi A
+Hackathon Mobile 48h — Hub Innovation
+Webinaire Architecture Mobile — Lieu à confirmer
+Capacité totale : 530
