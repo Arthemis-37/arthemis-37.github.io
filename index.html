@@ -8,10 +8,10 @@
   <!-- Base thème sombre Docsify -->
   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/dark.css">
 
-  <!-- Coloration syntaxique pour le code (Kotlin, Bash, Python, etc.) -->
+  <!-- Coloration syntaxique pour le code -->
   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/prismjs@1/themes/prism-tomorrow.min.css">
 
-  <!-- Palette de couleurs Obsidian (fond nuit + accent violet) -->
+  <!-- Style personnalisé Obsidian Dark -->
   <style>
     :root {
       --base-background-color: #1a1b26;
@@ -25,7 +25,7 @@
 
     body {
       background-color: #1a1b26 !important;
-      color: #c0caf5;
+      color: #c0caf5 !important;
     }
 
     .sidebar {
@@ -33,7 +33,7 @@
       border-right: 1px solid #24283b;
     }
 
-    /* Style de l'élément sélectionné dans le menu (violet Obsidian) */
+    /* Style du menu actif (accent violet) */
     .sidebar-nav li.active > a {
       background-color: #7aa2f733 !important;
       color: #bb9af7 !important;
@@ -42,11 +42,16 @@
       font-weight: bold;
     }
 
-    /* Blocs de code sombres */
+    /* Blocs de code */
     pre[class*="language-"] {
       background: #16161e !important;
       border: 1px solid #24283b;
       border-radius: 8px;
+    }
+
+    code {
+      color: #bb9af7 !important;
+      background: #24283b !important;
     }
 
     /* Barre de recherche */
@@ -55,6 +60,42 @@
       color: #fff !important;
       border: 1px solid #414868 !important;
       border-radius: 6px;
+    }
+
+    /* --- CORRECTION DES TABLEAUX --- */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 1.5rem 0;
+      color: #c0caf5 !important;
+    }
+
+    th {
+      background-color: #1f2335 !important;
+      color: #7aa2f7 !important;
+      border: 1px solid #3b4261 !important;
+      padding: 10px 14px;
+      font-weight: 600;
+    }
+
+    td {
+      border: 1px solid #24283b !important;
+      padding: 10px 14px;
+      color: #c0caf5 !important;
+    }
+
+    /* Fond uni/alterné sombre (supprime le blanc) */
+    tr {
+      background-color: #1a1b26 !important;
+      border-top: none !important;
+    }
+
+    tr:nth-child(2n) {
+      background-color: #16161e !important;
+    }
+
+    tr:hover {
+      background-color: #24283b !important;
     }
   </style>
 </head>
@@ -75,9 +116,10 @@
   <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
   <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
   
-  <!-- Composants Prism pour surligner le Kotlin et autres langages -->
+  <!-- Coloration syntaxique -->
   <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-kotlin.min.js"></script>
   <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
   <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-json.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-javascript.min.js"></script>
 </body>
 </html>
