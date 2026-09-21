@@ -744,3 +744,170 @@ println(valides) // [Note : 14.0/20, Note : 19.0/20, Note : 11.5/20]
 val moyenne = notes.sumOf { it } / notes.size
 val aReussi = notes.any { it >= 18.0 } // true
 ```
+---
+
+## 17. Cas Pratique : Manipuler une Collection d'Événements
+
+En développement applicatif (par exemple pour un écran d'agenda ou de billetterie), on manipule quasi systématiquement des collections d'objets métier modélisés sous forme de `data class`.
+
+---
+
+### A. Les différents types de listes applicables
+
+Lorsqu'on manipule une liste d'objets, le choix du type dépend de la mutabilité et du besoin d'accès :
+
+| Type d'interface / classe | Caractéristiques | Cas d'usage typique |
+| :--- | :--- | :--- |
+| **`List<Event>`** | En lecture seule (*read-only*), immuable par défaut. | Données d'affichage UI (Jetpack Compose), retours d'API. |
+| **`MutableList<Event>`** | Modifiable (`add`, `remove`, `clear`). | Panier, liste d'attente, gestion d'un formulaire dynamique. |
+| **`ArrayList<Event>`** | Implémentation concrète basée sur un tableau dynamique redimensionnable. | Créée en coulisses par `mutableListOf()`, utile si l'on a besoin d'optimiser des accès indexés fréquents. |
+
+---
+
+### B. Modélisation de l'événement (`Event`)
+
+Reprenons notre modèle d'événement avec titre, capacité et prix :
+
+```kotlin
+data class Event(
+    val id: Int,
+    val title: String,
+    val capacity: Int,
+    val price: Double = 0.0
+)
+```
+
+---
+
+### C. Opérations et requêtes courantes sur la collection
+
+Voici un ensemble d'opérations concrètes pour filtrer, trier, agréger et transformer une liste d'événements :
+
+```kotlin
+fun main() {
+    val events: List<Event> = listOf(
+        Event(1, "Conférence Kotlin", 150, 0.0),
+        Event(2, "Atelier Android", 30, 15.0),
+        Event(3, "Hackathon Mobile", 80, 5.0),
+        Event(4, "Meetup UI/UX", 50, 0.0),
+        Event(5, "Masterclass Compose", 25, 45.0)
+    )
+
+    // 1. Filtrer les événements gratuits
+    val gratuits = events.filter { it.price == 0.0 }
+    println("Événements gratuits : ${gratuits.map { it.title }}")
+
+    // 2. Trouver le premier atelier disponible (< 50 places)
+    val petitComite = events.find { it.capacity <= 30 }
+    println("Atelier intimiste : ${petitComite?.title}")
+
+    // 3. Trier par capacité décroissante
+    val parCapacite = events.sortedByDescending { it.capacity }
+
+    // 4. Calculer la jauge totale de tous les événements réunis
+    val capaciteTotale = events.sumOf { it.capacity }
+    println("Capacité globale : $capaciteTotale places")
+
+    // 5. Regrouper par type (payant vs gratuit) via groupBy
+    val repartition = events.groupBy { if (it.price == 0.0) "Gratuit" else "Payant" }
+    println("Total gratuits : ${repartition["Gratuit"]?.size}")
+    println("Total payants : ${repartition["Payant"]?.size}")
+
+    // 6. Transformer (map) vers une liste de titres formatés
+    val fiches = events.map { (id, title, cap, price) ->
+        "[$id] $title — $cap places (${if (price == 0.0) "Offert" else "$price €"})"
+    }
+    fiches.forEach { println(it) }
+}
+```
+
+---
+
+### D. Gestion d'une liste modifiable (`MutableList`)
+
+Pour ajouter, modifier ou retirer un événement à la volée :
+
+```kotlin
+val planning: MutableList<Event> = events.toMutableList()
+
+// Ajout
+planning.add(Event(6, "Keynote Annuelle", 300, 20.0))
+
+// Suppression selon un critère (ex. annulation des sessions de moins de 30 places)
+planning.removeAll { it.capacity < 30 }
+
+// Mise à jour ciblée grâce à copy()
+val index = planning.indexOfFirst { it.id == 1 }
+if (index != -1) {
+    planning[index] = planning[index].copy(capacity = 200)
+}
+```
+### E. Parcourir une liste avec la boucle `for`
+
+La boucle `for` s'adapte à plusieurs cas d'usage selon qu'on a besoin uniquement de l'élément, de sa position, ou des deux en même temps.
+
+---
+
+#### 1. Parcourir les éléments directement (`for in`)
+C'est la syntaxe la plus simple et la plus lisible quand l'index n'est pas nécessaire :
+
+```kotlin
+for (event in events) {
+    println("${event.title} (${event.capacity} places)")
+}
+```
+
+---
+
+#### 2. Parcourir avec l'index et l'élément (`withIndex()`)
+Si l'on a besoin d'afficher le rang ou le numéro de ligne en plus de l'objet, on utilise `.withIndex()`, qui déstructure automatiquement la paire `(index, element)` :
+
+```kotlin
+for ((index, event) in events.withIndex()) {
+    println("#${index + 1} - ${event.title}")
+}
+```
+
+---
+
+#### 3. Parcourir via les index (`indices`)
+Pour manipuler les éléments en accédant directement à leur position mémoire ou pour comparer un élément au suivant :
+
+```kotlin
+for (i in events.indices) {
+    println("Événement à l'index $i : ${events[i].title}")
+}
+```
+
+---
+
+#### 4. Parcourir avec un intervalle personnalisé (`until`, `downTo`, `step`)
+Pour ne parcourir qu'une partie de la liste ou sauter des éléments :
+
+```kotlin
+// Parcourir uniquement les 3 premiers (de l'index 0 à 2)
+for (i in 0 until minOf(3, events.size)) {
+    println("Top 3 : ${events[i].title}")
+}
+
+// Parcourir un événement sur deux
+for (i in events.indices step 2) {
+    println("Événement pair : ${events[i].title}")
+}
+
+// Parcourir à l'envers (du dernier au premier)
+for (i in events.size - 1 downTo 0) {
+    println("Rétro : ${events[i].title}")
+}
+```
+
+---
+
+#### 5. Déstructuration directe dans la boucle
+Comme `Event` est une `data class`, on peut déstructurer ses attributs directement dans la signature du `for` :
+
+```kotlin
+for ((id, title, capacity) in events) {
+    println("[$id] $title : jauge de$capacity")
+}
+```
