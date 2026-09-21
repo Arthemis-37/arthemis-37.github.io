@@ -911,3 +911,75 @@ for ((id, title, capacity) in events) {
     println("[$id] $title : jauge de$capacity")
 }
 ```
+---
+
+## 18. Bonnes Pratiques : Lire et Analyser du Code Kotlin Efficacement
+
+Comprendre rapidement le code d'un collègue, d'une documentation ou d'une bibliothèque Android repose sur le repérage de quelques marqueurs visuels clés du langage.
+
+---
+
+### A. La grille de lecture rapide
+
+Face à une fonction ou un bloc d'instructions, pose-toi ces questions dans l'ordre :
+
+1. **Instruction ou Expression ?**
+   * Y a-t-il un `=` après la signature de la fonction (`fun calculer() = ...`) ou après une variable (`val x = if (...)`) ? Si oui, le bloc produit directement une donnée.
+2. **Où est la valeur de retour ?**
+   * Dans un bloc `{}` utilisé comme expression (avec `if`, `when` ou une lambda), **la dernière ligne exécutée est la valeur produite**. Pas besoin de chercher un mot-clé `return`.
+3. **D'où vient la variable ?**
+   * Un identifiant surgit sans être déclaré ? C'est soit le paramètre implicite **`it`** d'une lambda à argument unique, soit une propriété accessible via le **`this`** implicite d'une classe ou d'une fonction d'extension.
+4. **Quels types entrent et sortent ?**
+   * Grâce à l'inférence de type, les types ne sont pas toujours écrits. Lis les signatures : `(A, B) -> C` indique une fonction qui prend `A` et `B` pour fournir `C`.
+
+---
+
+### B. Décryptage d'exemples pas à pas
+
+#### 1. Déconstruire une lambda et sa trailing syntax
+```kotlin
+val resultat = events
+    .filter { it.price > 0.0 }
+    .map { "${it.title} : ${it.price} €" }
+```
+* **Lecture :** 
+  1. `events` est la source (une collection).
+  2. `.filter { ... }` est une trailing lambda : les parenthèses `()` ont sauté car la lambda est le seul paramètre.
+  3. `it` représente chaque élément un par un pendant le parcours.
+  4. `.map { ... }` transforme chaque élément restant en une chaîne formatée via `$it.title`.
+
+---
+
+#### 2. Déconstruire une fonction d'extension chaînée
+```kotlin
+fun Double.remise(taux: Double) = this * (1.0 - taux / 100.0)
+```
+* **Lecture :**
+  1. `Double.` $\rightarrow$ fonction greffée sur tous les nombres décimaux.
+  2. `this` $\rightarrow$ la valeur numérique appelante (ex. dans `50.0.remise(10.0)`, `this` vaut `50.0`).
+  3. Le `=` sans accolades indique une fonction à expression unique (*single-expression*), le type de retour `Double` est déduit automatiquement.
+
+---
+
+#### 3. Déconstruire un `when` sans argument
+```kotlin
+val statut = when {
+    score >= 90 -> "A"
+    score >= 70 -> "B"
+    else -> "C"
+}
+```
+* **Lecture :**
+  1. Aucun paramètre entre parenthèses après `when` : chaque ligne est évaluée comme une condition booléenne (`true`/`false`) indépendante, de haut en bas.
+  2. Dès qu'une branche est vraie, la valeur à droite de `->` est renvoyée et stockée dans `statut`.
+
+---
+
+### C. Réflexes pour le débogage et la relecture
+
+| Piège fréquent | Symptôme | Cause / Solution |
+| :--- | :--- | :--- |
+| **Parenthèses invisibles** | `action { ... }` | C'est un appel de fonction standard utilisant la trailing lambda, pas un bloc de classe. |
+| **Propriété introuvable** | Erreur sur `it.name` | Vérifier si l'étape précédente n'a pas transformé la liste (ex. après un `.map { it.id }`, `it` devient un `Int`, plus l'objet d'origine). |
+| **NullPointer inattendu** | Appel direct sur un résultat | Utiliser `?.` (safe call) si la méthode précédente renvoie un type nullable (comme `.find { }` ou `.firstOrNull()`). |
+| **Modification inopérante** | `.filter { ... }` ne modifie rien | Les méthodes de collection en lecture seule renvoient une **nouvelle** liste sans muter la liste de départ ; il faut réassigner le résultat dans une variable. |
