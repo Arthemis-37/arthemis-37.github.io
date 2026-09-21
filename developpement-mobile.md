@@ -983,3 +983,71 @@ val statut = when {
 | **Propriété introuvable** | Erreur sur `it.name` | Vérifier si l'étape précédente n'a pas transformé la liste (ex. après un `.map { it.id }`, `it` devient un `Int`, plus l'objet d'origine). |
 | **NullPointer inattendu** | Appel direct sur un résultat | Utiliser `?.` (safe call) si la méthode précédente renvoie un type nullable (comme `.find { }` ou `.firstOrNull()`). |
 | **Modification inopérante** | `.filter { ... }` ne modifie rien | Les méthodes de collection en lecture seule renvoient une **nouvelle** liste sans muter la liste de départ ; il faut réassigner le résultat dans une variable. |
+
+### G. Transformer une collection avec la méthode `map`
+
+La méthode **`map`** est l'opération de transformation par excellence en programmation fonctionnelle et en Kotlin. Elle applique une fonction ou une lambda à **chaque élément** d'une collection d'origine et renvoie une **nouvelle liste** contenant les résultats obtenus.
+
+Contrairement à `filter` qui peut réduire la taille de la liste, `map` conserve **toujours exactement le même nombre d'éléments** que la collection de départ, mais peut en modifier la valeur et le type.
+
+---
+
+#### 1. Principe de base : Transformation simple
+La variable implicite `it` représente chaque élément au fur et à mesure du parcours. La valeur produite par la lambda constitue le nouvel élément :
+
+```kotlin
+val nombres = listOf(1, 2, 3, 4, 5)
+
+// Multiplier chaque élément par 2
+val doubles = nombres.map { it * 2 }
+println(doubles) // [2, 4, 6, 8, 10]
+```
+
+---
+
+#### 2. Changement de type (Projection de données)
+L'un des usages les plus fréquents de `map` consiste à transformer une liste d'un type $A$ vers une liste d'un type $B$ (par exemple, extraire un champ d'un objet ou préparer des données pour l'interface graphique) :
+
+```kotlin
+// Modèle de données
+data class Event(val id: Int, val title: String, val price: Double)
+
+val events = listOf(
+    Event(1, "Conférence Kotlin", 0.0),
+    Event(2, "Atelier Compose", 25.0)
+)
+
+// List<Event> -> List<String> (extraction d'une propriété)
+val titres: List<String> = events.map { it.title }
+println(titres) // [Conférence Kotlin, Atelier Compose]
+
+// List<Event> -> List<String> (formatage personnalisé)
+val etiquettes: List<String> = events.map { 
+    "${it.title} (${if (it.price == 0.0) "Gratuit" else "${it.price} €"})" 
+}
+```
+
+---
+
+#### 3. Chaînage typique : `filter` puis `map`
+Dans un pipeline de données, on filtre généralement les données d'abord, puis on transforme les éléments conservés :
+
+```kotlin
+val evenementsPayants = events
+    .filter { it.price > 0.0 }
+    .map { "${it.title} : ${it.price} €" }
+```
+
+> **Attention à l'ordre dans la chaîne :**
+> Si tu écris `events.map { ... }.filter { ... }`, tu effectues la transformation sur **tous** les éléments avant d'en jeter une partie. Mettre `filter` en premier permet de ne transformer que les éléments réellement utiles, ce qui optimise les calculs et la mémoire.
+
+---
+
+#### 4. Les variantes indispensables de `map`
+
+| Variante | Rôle & Utilité | Exemple |
+| :--- | :--- | :--- |
+| **`mapNotNull`** | Transforme les éléments et **ignore automatiquement les résultats `null`** (combine un `map` et un `filterNotNull`). | `val valides = list.mapNotNull { it.toIntOrNull() }` |
+| **`mapIndexed`** | Fournit à la fois la position et l'élément `(index, item)` lors de la transformation. | `events.mapIndexed { index, e -> "#${index + 1} -${e.title}" }` |
+| **`flatMap`** | Transforme chaque élément en une sous-liste, puis **aplatit** le tout en une seule liste unique à une dimension. | `listes.flatMap { it.elements }` |
+| **`mapKeys` / `mapValues`** | Dédiées aux dictionnaires (`Map`) pour transformer uniquement les clés ou uniquement les valeurs. | `panier.mapValues { it.value * 1.20 }` |
