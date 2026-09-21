@@ -4,8 +4,59 @@
   <meta charset="UTF-8">
   <title>Cours ESGI</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Thème Docsify propre et moderne -->
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+  
+  <!-- Base thème sombre Docsify -->
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/dark.css">
+
+  <!-- Coloration syntaxique pour le code (Kotlin, Bash, Python, etc.) -->
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/prismjs@1/themes/prism-tomorrow.min.css">
+
+  <!-- Palette de couleurs Obsidian (fond nuit + accent violet) -->
+  <style>
+    :root {
+      --base-background-color: #1a1b26;
+      --sidebar-background: #14151f;
+      --text-color-base: #c0caf5;
+      --heading-color: #ffffff;
+      --link-color: #bb9af7;
+      --sidebar-nav-link-color: #9aa5ce;
+      --sidebar-nav-link-color--active: #ffffff;
+    }
+
+    body {
+      background-color: #1a1b26 !important;
+      color: #c0caf5;
+    }
+
+    .sidebar {
+      background-color: #14151f !important;
+      border-right: 1px solid #24283b;
+    }
+
+    /* Style de l'élément sélectionné dans le menu (violet Obsidian) */
+    .sidebar-nav li.active > a {
+      background-color: #7aa2f733 !important;
+      color: #bb9af7 !important;
+      border-right: 3px solid #bb9af7;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+
+    /* Blocs de code sombres */
+    pre[class*="language-"] {
+      background: #16161e !important;
+      border: 1px solid #24283b;
+      border-radius: 8px;
+    }
+
+    /* Barre de recherche */
+    .search input {
+      background: #24283b !important;
+      color: #fff !important;
+      border: 1px solid #414868 !important;
+      border-radius: 6px;
+    }
+  </style>
 </head>
 <body>
   <div id="app">Chargement...</div>
@@ -15,10 +66,18 @@
       repo: 'arthemis-37/arthemis-37.github.io',
       loadSidebar: true,
       subMaxLevel: 2,
-      search: 'auto'
+      search: {
+        placeholder: 'Rechercher un cours...',
+        noData: 'Aucun résultat'
+      }
     }
   </script>
   <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
   <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
+  
+  <!-- Composants Prism pour surligner le Kotlin et autres langages -->
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-kotlin.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-json.min.js"></script>
 </body>
 </html>
